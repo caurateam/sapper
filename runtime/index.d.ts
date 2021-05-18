@@ -78,9 +78,17 @@ declare module '@sapper/server' {
 		ignore?: Ignore;
 	}
 
-	export function middleware(
-		opts?: MiddlewareOptions
-	): (req: SapperRequest, res: SapperResponse, next: () => void) => void;
+    export function middleware(opts?: MiddlewareOptions): Handler;
+
+    export function middlewares(opts?: MiddlewareOptions): Handler[];
+
+    export type Handler = (
+      req: SapperRequest,
+      res: SapperResponse,
+      next: () => void
+    ) => void;
+
+
 }
 
 declare module '@sapper/service-worker' {

@@ -1,4 +1,5 @@
 import { SapperRequest, SapperResponse, ServerRoute } from '@sapper/internal/manifest-server';
+import {NextWithError} from './types';
 
 export function get_server_route_handler(routes: ServerRoute[]) {
 	async function handle_route(route: ServerRoute, req: SapperRequest, res: SapperResponse, next: () => void) {
@@ -46,6 +47,8 @@ export function get_server_route_handler(routes: ServerRoute[]) {
 				if (err) {
 					res.statusCode = 500;
 					res.end(err.message);
+                    const ne = next as NextWithError;
+                    ne(err);
 				} else {
 					process.nextTick(next);
 				}
@@ -54,7 +57,6 @@ export function get_server_route_handler(routes: ServerRoute[]) {
 			try {
 				await handle_method(req, res, handle_next);
 			} catch (err) {
-				console.error(err);
 				handle_next(err);
 			}
 		} else {

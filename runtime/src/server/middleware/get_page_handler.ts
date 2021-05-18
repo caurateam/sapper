@@ -19,6 +19,7 @@ import App from '@sapper/internal/App.svelte';
 import { PageContext, PreloadResult } from '@sapper/common';
 import detectClientOnlyReferences from './detect_client_only_references';
 import { TLSSocket } from 'tls';
+import {NextWithError} from './types';
 
 export function get_page_handler(
 	manifest: Manifest,
@@ -36,22 +37,21 @@ export function get_page_handler(
 
 	const { pages, error: error_route } = manifest;
 
-	function bail(res: SapperResponse, err: Error | string) {
-		console.error(err);
-
+	function bail(res: SapperResponse, err: Error | string, next?: NextWithError) {
 		const message = dev ? escape_html(typeof err === 'string' ? err : err.message) : 'Internal server error';
 
 		res.statusCode = 500;
 		res.end(`<pre>${message}</pre>`);
+        next(err);
 	}
 
-	function handle_error(req: SapperRequest, res: SapperResponse, statusCode: number, error: Error | string) {
+	function handle_error(req: SapperRequest, res: SapperResponse, statusCode: number, error: Error | string, next?: NextWithError) {
 		handle_page({
 			pattern: null,
 			parts: [
 				{ name: null, component: { default: error_route } }
 			]
-		}, req, res, statusCode, error || 'Unknown error');
+		}, req, res, statusCode, error || 'Unknown error', next);
 	}
 
 	async function handle_page(
@@ -59,7 +59,8 @@ export function get_page_handler(
         req: SapperRequest,
         res: SapperResponse,
         status = 200,
-        error: Error | string = null) {
+        error: Error | string = null,
+        next?: NextWithError) {
 		const is_service_worker_index = req.path === '/service-worker-index.html';
 		const build_info: {
 			bundler: 'rollup' | 'webpack',
@@ -111,7 +112,7 @@ export function get_page_handler(
 		try {
 			session = await session_getter(req, res);
 		} catch (err) {
-			return bail(res, err);
+			return bail(res, err, next);
 		}
 
 		let redirect: { statusCode: number, location: string };
@@ -218,7 +219,7 @@ export function get_page_handler(
 			preloaded = await Promise.all(toPreload);
 		} catch (err) {
 			if (error) {
-				return bail(res, err);
+				return bail(res, err, next);
 			}
 
 			preload_error = { statusCode: 500, message: err };
@@ -232,15 +233,16 @@ export function get_page_handler(
 				res.statusCode = redirect.statusCode;
 				res.setHeader('Location', location);
 				res.end();
+                if (next) next();
 
 				return;
 			}
 
 			if (preload_error) {
 				if (!error) {
-					handle_error(req, res, preload_error.statusCode, preload_error.message);
+					handle_error(req, res, preload_error.statusCode, preload_error.message, next);
 				} else {
-					bail(res, preload_error.message);
+					bail(res, preload_error.message, next);
 				}
 
 				return;
@@ -386,24 +388,30 @@ export function get_page_handler(
 
 			res.statusCode = status;
 			res.end(body);
+            if (next) next(error);
 		} catch (err) {
 			if (error) {
-				bail(res, err);
+				bail(res, err, next);
 			} else {
-				handle_error(req, res, 500, err);
+				handle_error(req, res, 500, err, next);
 			}
 		}
 	}
 
 	return function find_route(req: SapperRequest, res: SapperResponse, next: () => void) {
+        // early return if we've already written a response
+        if (res.headersSent) return next();
+
 		const req_path = req.path === '/service-worker-index.html' ? '/' : req.path;
 
 		const page = pages.find(p => p.pattern.test(req_path));
 
+        const ne = next as NextWithError;
+
 		if (page) {
-			handle_page(page, req, res);
+			handle_page(page, req, res, 200, null, ne);
 		} else {
-			handle_error(req, res, 404, 'Not found');
+			handle_error(req, res, 404, 'Not found', ne);
 		}
 	};
 }
