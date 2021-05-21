@@ -132,7 +132,7 @@ describe('errors', function() {
 
 		assert.strictEqual(
 			await r.text('body'),
-			'oops'
+			'service unavailable'
 		);
 	});
 
@@ -151,7 +151,7 @@ describe('errors', function() {
 
 		assert.strictEqual(
 			await r.text('body'),
-			'oops'
+			'service unavailable'
 		);
 	});
 

@@ -1,7 +1,7 @@
 import { SapperRequest, SapperResponse, ServerRoute } from '@sapper/internal/manifest-server';
 import {NextWithError} from './types';
 
-export function get_server_route_handler(routes: ServerRoute[]) {
+export function get_server_route_handler(routes: ServerRoute[], defaultErrorBody?:string) {
 	async function handle_route(route: ServerRoute, req: SapperRequest, res: SapperResponse, next: () => void) {
 		req.params = route.params(route.pattern.exec(req.path));
 
@@ -45,8 +45,12 @@ export function get_server_route_handler(routes: ServerRoute[]) {
 
 			const handle_next = (err?: Error) => {
 				if (err) {
-					res.statusCode = 500;
-					res.end(err.message);
+                    if (!res.headersSent) {
+                        res.statusCode = 500;
+                        
+                        res.end(defaultErrorBody ? defaultErrorBody : 'service unavailable');
+                    }
+
                     const ne = next as NextWithError;
                     ne(err);
 				} else {

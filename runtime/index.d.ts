@@ -76,6 +76,7 @@ declare module '@sapper/server' {
 	export interface MiddlewareOptions {
 		session?: (req: SapperRequest, res: SapperResponse) => unknown;
 		ignore?: Ignore;
+        defaultErrorBody?: string;
 	}
 
     export function middleware(opts?: MiddlewareOptions): Handler;

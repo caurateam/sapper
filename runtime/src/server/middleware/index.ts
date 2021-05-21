@@ -9,7 +9,8 @@ type IgnoreValue = IgnoreValue[] | RegExp | ((uri: string) => boolean) | string;
 
 export default function middleware(opts: {
 	session?: (req: SapperRequest, res: SapperResponse) => any,
-	ignore?: IgnoreValue
+	ignore?: IgnoreValue,
+    defaultErrorBody?:string
 } = {}) {
 	const { session, ignore } = opts;
 
@@ -60,7 +61,7 @@ export default function middleware(opts: {
 			cache_control: dev ? 'no-cache' : 'max-age=31536000, immutable'
 		}),
 
-		get_server_route_handler(manifest.server_routes),
+		get_server_route_handler(manifest.server_routes, opts.defaultErrorBody),
 
 		get_page_handler(manifest, session || noop)
 	].filter(Boolean));
@@ -90,7 +91,8 @@ export function compose_handlers(ignore: IgnoreValue, handlers: Handler[]): Hand
 
 export function middlewares(opts: {
 	session?: (req: SapperRequest, res: SapperResponse) => any,
-	ignore?: IgnoreValue
+	ignore?: IgnoreValue,
+    defaultErrorBody?:string
 } = {}) {
 	const { session } = opts;
 
@@ -141,7 +143,7 @@ export function middlewares(opts: {
 			cache_control: dev ? 'no-cache' : 'max-age=31536000, immutable'
 		}),
 
-		get_server_route_handler(manifest.server_routes),
+		get_server_route_handler(manifest.server_routes, opts.defaultErrorBody),
 
 		get_page_handler(manifest, session || noop)
 	].filter(Boolean);
