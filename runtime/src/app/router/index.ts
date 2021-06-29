@@ -147,8 +147,12 @@ function handle_click(event: MouseEvent) {
 
 	// Ignore if tag has
 	// 1. 'download' attribute
-	// 2. rel='external' attribute
-	if (a.hasAttribute('download') || a.getAttribute('rel') === 'external') return;
+	// 2. 'rel' attribute includes external
+	const rel = a.getAttribute('rel')?.split(/\s+/);
+
+	if (a.hasAttribute('download') || (rel && rel.includes('external'))) {
+		return;
+	}
 
 	// Ignore if <a> has a target
 	if (svg ? (<SVGAElement>a).target.baseVal : a.target) return;
