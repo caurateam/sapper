@@ -41,13 +41,11 @@ const stores = {
 };
 
 let $session: any;
-let session_dirty: boolean;
 
 stores.session.subscribe(async value => {
 	$session = value;
 
 	if (!ready) return;
-	session_dirty = true;
 
 	const dest = select_target(new URL(location.href));
 
@@ -165,7 +163,6 @@ async function render(branch: Branch, props: any, page: PageContext) {
 	current_branch = branch;
 	current_query = JSON.stringify(page.query);
 	ready = true;
-	session_dirty = false;
 }
 
 function part_changed(i, segment, match, stringified_query) {
@@ -183,6 +180,8 @@ function part_changed(i, segment, match, stringified_query) {
 			return true;
 		}
 	}
+
+	return false;
 }
 
 export async function hydrate_target(dest: Target): Promise<HydratedTarget> {
@@ -238,7 +237,7 @@ export async function hydrate_target(dest: Target): Promise<HydratedTarget> {
 
 			let result;
 
-			if (!session_dirty && !segment_dirty && current_branch[i] && current_branch[i].part === part.i) {
+			if (!segment_dirty && current_branch[i] && current_branch[i].part === part.i) {
 				result = current_branch[i];
 			} else {
 				segment_dirty = false;

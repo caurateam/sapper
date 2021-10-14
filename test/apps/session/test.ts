@@ -28,7 +28,7 @@ describe('session', function() {
 		assert.strictEqual(await r.text('h1'), 'changed');
 	});
 
-	it('preloads session props', async () => {
+	it('session props are not reactive', async () => {
 		await r.load('/preloaded');
 
 		assert.strictEqual(await r.text('h1'), 'hello world');
@@ -37,7 +37,7 @@ describe('session', function() {
 		assert.strictEqual(await r.text('h1'), 'hello world');
 
 		await r.page.click('button');
-		assert.strictEqual(await r.text('h1'), 'changed');
+		assert.strictEqual(await r.text('h1'), 'hello world');
 	});
 
 	it('survives exception from session getter', async () => {
