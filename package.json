@@ -1,6 +1,6 @@
 {
   "name": "@caurateam/sapper",
-  "version": "0.30.4",
+  "version": "0.30.5",
   "description": "The next small thing in web development, powered by Svelte",
   "bin": {
     "sapper": "./sapper"
